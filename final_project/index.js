@@ -18,16 +18,19 @@ app.use(
 );
 
 app.use("/customer/auth/*", function auth(req, res, next) {
-  if (req.session && req.session.token) {
-    try {
-      const decoded = jwt.verify(req.session.token, SECRET_KEY);
-      req.user = decoded; // Store user data in request
-      next();
-    } catch (err) {
-      return res.status(403).json({ message: "Invalid or expired token" });
-    }
-  } else {
+  const authHeader = req.headers["authorization"];
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ message: "Unauthorized access" });
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  try {
+    const decoded = jwt.verify(token, SECRET_KEY);
+    req.user = decoded; // Store user data in request
+    next();
+  } catch (err) {
+    return res.status(403).json({ message: "Invalid or expired token" });
   }
 });
 
@@ -37,5 +40,3 @@ app.use("/customer", customer_routes);
 app.use("/", genl_routes);
 
 app.listen(PORT, () => console.log("Server is running"));
-
-

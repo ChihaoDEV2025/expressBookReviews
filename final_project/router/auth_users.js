@@ -39,12 +39,14 @@ regd_users.put("/auth/review/:isbn", (req, res) => {
   const { review } = req.body;
   const authHeader = req.headers["authorization"];
 
-  if (!authHeader) {
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(403).json({ message: "Authorization token required" });
   }
 
+  const token = jwt.sign({ username }, SECRET_KEY, { expiresIn: "1h" });
+
   try {
-    const decoded = jwt.verify(authHeader, "secretkey");
+    const decoded = jwt.verify(token, SECRET_KEY);
     const username = decoded.username;
 
     if (!books[isbn]) {
@@ -67,12 +69,14 @@ regd_users.delete("/auth/review/:isbn", (req, res) => {
   const isbn = req.params.isbn;
   const authHeader = req.headers["authorization"];
 
-  if (!authHeader) {
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(403).json({ message: "Authorization token required" });
   }
 
+  const token = authHeader.split(" ")[1];
+
   try {
-    const decoded = jwt.verify(authHeader, "secretkey");
+    const decoded = jwt.verify(token, "secretkey");
     const username = decoded.username;
 
     if (
